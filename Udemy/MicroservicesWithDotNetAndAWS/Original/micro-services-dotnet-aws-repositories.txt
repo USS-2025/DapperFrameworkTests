@@ -1,9 +1,0 @@
-https://github.com/aussiearef/MicroservicesWithAWS_FrontEnd
-https://github.com/aussiearef/MicroservicesWithAWS_Dotnet_HotelMan
-https://github.com/aussiearef/MicroservicesWithAWS_Dotnet_Lambda_Authorizer
-https://github.com/aussiearef/MicroservicesWithAWS_Dotnet_HotelCreatedEventHandler
-https://github.com/aussiearef/Microservices_Dotnet_AWS_Review_Sidecar
-https://github.com/aussiearef/Microservices_Dotnet_AWS_Review
-https://github.com/aussiearef/Microservices_Dotnet_AWS_Booking
-https://github.com/aussiearef/MicroservicesWithAWS_Dotnet_SearchAPI
-https://github.com/aussiearef/Microservices_Dotnet_AWS_HotelCreatedEVent_Handler_Order_Domain
