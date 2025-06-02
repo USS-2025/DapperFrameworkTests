@@ -1,23 +1,10 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.EnvironmentVariables;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
-using Serilog;
-using Serilog.Extensions.Logging;
-using Serilog.Sinks.Async;
-using Serilog.Sinks.File;
-using Serilog.Sinks.SystemConsole;
-
-using OracleTests.Utils;
-using Microsoft.AspNetCore.Mvc;
+﻿using Dapper.Extensions.Oracle;
 using Microsoft.Extensions.Options;
-using System.Reflection;
-using System.Diagnostics;
-using System.Text;
 using Oracle.ManagedDataAccess.Client;
+using OracleTests.Utils;
+using Serilog;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace OracleTests
 {
@@ -57,8 +44,8 @@ namespace OracleTests
                 config.SetBasePath(context.HostingEnvironment.ContentRootPath);
             });
 
-            webHostBuilder.CaptureStartupErrors(true);
-            webHostBuilder.UseSetting("detailedErrors", "true");
+            //webHostBuilder.CaptureStartupErrors(true);
+            //webHostBuilder.UseSetting("detailedErrors", "true");
 
             // Deprecated:
             // webHostBuilder.UseStartup<Startup>();
@@ -83,6 +70,9 @@ namespace OracleTests
                     .WriteTo.Async(a => a.Seq(serverUrl: "http://localhost:5341")) // Standard-Port von Seq
                     .CreateLogger());
             });
+
+            //For Oracle
+            services.AddDapperForOracle();
 
             services.Configure<DatabaseOptions>(webAppBuilder.Configuration.GetSection(nameof(DatabaseOptions)));
 
@@ -116,28 +106,35 @@ namespace OracleTests
 
             DatabaseOptions dbOptions = scopedProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
-           string connectionString = $"Data Source=" +
-                "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)" +
-                $"(HOST={dbOptions.Host})" +
-                $"(PORT={dbOptions.Port})" +
-                "))" +
-                "(CONNECT_DATA=(SERVER=DEDICATED)" +
-                $"(SERVICE_NAME={dbOptions.ServiceName})" +
-                "));" +
-                $"User Id={dbOptions.UserName};" +
-                $"Password={dbOptions.Password};";
+            string connectionString = $"Data Source=" +
+                 "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)" +
+                 $"(HOST={dbOptions.Host})" +
+                 $"(PORT={dbOptions.Port})" +
+                 "))" +
+                 "(CONNECT_DATA=(SERVER=DEDICATED)" +
+                 $"(SERVICE_NAME={dbOptions.ServiceName})" +
+                 "));" +
+                 $"User Id={dbOptions.UserName};" +
+                 $"Password={dbOptions.Password};";
 
             // Connect to the database 
             await using (var connection = new OracleConnection(connectionString))
             {
-                await connection.OpenAsync();
+                try
+                {
+                    await connection.OpenAsync();
 
-                // Create a query that retrieves all books with an author name of "John Smith"    
-                var sql = "SELECT * FROM Books WHERE Author=:authorName";
-                // Use the Query method to execute the query and return a list of objects    
-                //var books = connection.Query<Book>(sql, new { authorName = "John Smith" }).ToList();
+                    // Create a query that retrieves all books with an author name of "John Smith"    
+                    var sql = "SELECT * FROM Books WHERE Author=:authorName";
+                    // Use the Query method to execute the query and return a list of objects    
+                    //var books = connection.Query<Book>(sql, new { authorName = "John Smith" }).ToList();
 
-                await connection.CloseAsync();
+                    await connection.CloseAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, $"{ex}");
+                }
             }
 
 
@@ -153,7 +150,7 @@ namespace OracleTests
 
                 Log.Information("Starting web host of {Application} ({Environment}), Version {Version} started successfully.",
                     env.ApplicationName, env.EnvironmentName, assVersion);
-                
+
                 await webApp.RunAsync();
 
                 return 0;
